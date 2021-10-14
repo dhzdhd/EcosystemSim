@@ -1,13 +1,20 @@
-// Learn more about F# at http://docs.microsoft.com/dotnet/fsharp
+namespace EcoSim
 
-open System
+open Raylib_cs
+open Sim
 
-// Define a function to construct a message to print
-let from whom =
-    sprintf "from %s" whom
-
-[<EntryPoint>]
-let main argv =
-    let message = from "F#" // Call the function
-    printfn "Hello world %s" message
-    0 // return an integer exit code
+module Program =
+    let mutable start = false
+    let mutable pause = false
+    
+    
+    [<EntryPoint>]
+    let main argv =
+        Raylib.InitWindow (1080, 720, "Ecosystem Simulation")
+        Raylib.SetConfigFlags ConfigFlags.FLAG_WINDOW_RESIZABLE
+        
+        while (Raylib.WindowShouldClose () <> true) do
+            Setup
+        
+        Raylib.CloseWindow ()
+        0
