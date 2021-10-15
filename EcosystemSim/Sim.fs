@@ -1,37 +1,52 @@
 ﻿namespace EcoSim
 
+open System.Collections.Generic
 open System.Numerics
 open Raylib_cs
 
-type Blob =
-    {
-        Width: int
-        Height: int
-        Aggressiveness: int  // 1 to 10
-    }
-    
-type BlobChoice =
+type BlobType =
     | PassiveBlob
     | AggroBlob
     | DiseasedBlob
-    
+
+type Blob =
+    {
+        Center: Vector2
+        Radius: float32
+        Color: Color
+        Type: BlobType  // 1 to 10
+    }
+
 module private Utils =
     let CustomTriangle center distanceToPoint =
         0
 
 module Sim =
-    let passiveBlobList = [||]
-    let aggroBlobList = [||]
+//    let mutable diseasedBlobList = List.empty
+    let mutable passiveBlobList = List.empty
+//    let mutable aggroBlobList = List.empty
     
-    let blob = {Width = 20; Height = 20; Aggressiveness = 2}
+    let initializeBlob () =
+        let blob = {Center = Vector2(50.f, 50.f); Radius = 10.f; Color = Color.GREEN; Type = BlobType.PassiveBlob}
+        passiveBlobList <- blob :: passiveBlobList
     
+    let drawBlobs () =
+        passiveBlobList
+            |> List.map (fun (element: Blob) ->
+            Raylib.DrawCircle (int(element.Center.X) ,int(element.Center.Y), element.Radius, element.Color))
+        
+        
     let Setup () =
+        // Update
+        initializeBlob ()
+        
+        // Draw
         Raylib.BeginDrawing ()
         Raylib.ClearBackground Color.BLACK
         
-        passiveBlobList
-        |> Array.map (fun element -> Raylib.DrawTriangle (Vector2(1f, 2f), Vector2(1f, 2f), Vector2(1f, 2f), Color.RED))
-        
+//        drawBlobs ()
+        Raylib.DrawCircle (int(passiveBlobList.[0].Center.X) ,int(passiveBlobList.[0].Center.Y), passiveBlobList.[0].Radius,passiveBlobList.[0].Color)
+                
         Raylib.EndDrawing ()
         
         ()

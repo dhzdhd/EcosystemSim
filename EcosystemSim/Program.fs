@@ -20,5 +20,5 @@ module Program =
         
         Raylib.CloseWindow ()
         
-//        Plot.ShowData
+        Plot.ShowData
         0
