@@ -7,12 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Plot.fs" />
         <Compile Include="Constants.fs" />
         <Compile Include="Sim.fs" />
+        <Compile Include="StartScreen.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Plotly.NET" Version="2.0.0-preview.10" />
       <PackageReference Include="Raylib-cs" Version="3.7.0.1" />
     </ItemGroup>
 

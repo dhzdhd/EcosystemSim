@@ -10,6 +10,11 @@ type Blob =
         Aggressiveness: int  // 1 to 10
     }
     
+type BlobChoice =
+    | PassiveBlob
+    | AggroBlob
+    | DiseasedBlob
+    
 module private Utils =
     let CustomTriangle center distanceToPoint =
         0
@@ -20,13 +25,16 @@ module Sim =
     
     let blob = {Width = 20; Height = 20; Aggressiveness = 2}
     
-    let Setup =
+    let Setup () =
         Raylib.BeginDrawing ()
         Raylib.ClearBackground Color.BLACK
-        let a =
-            passiveBlobList
-            |> Array.map (fun element -> Raylib.DrawTriangle (Vector2(1f, 2f), Vector2(1f, 2f), Vector2(1f, 2f), Color.RED))
+        
+        passiveBlobList
+        |> Array.map (fun element -> Raylib.DrawTriangle (Vector2(1f, 2f), Vector2(1f, 2f), Vector2(1f, 2f), Color.RED))
         
         Raylib.EndDrawing ()
+        
+        ()
+        
         
 
