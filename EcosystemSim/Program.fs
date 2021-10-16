@@ -19,6 +19,6 @@ module Program =
         
         Raylib.CloseWindow ()
         
-        Plot.ShowData Sim.blobList 
+//        Plot.ShowData Sim.blobList 
         
         0
