@@ -18,6 +18,7 @@
       <PackageReference Include="Plotly.NET" Version="2.0.0-preview.10" />
       <PackageReference Include="Plotly.NET.ImageExport" Version="2.0.0-preview.10" />
       <PackageReference Include="Raylib-cs" Version="3.7.0.1" />
+      <PackageReference Include="Raylib_Extensions" Version="1.0.0" />
     </ItemGroup>
 
 </Project>

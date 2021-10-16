@@ -3,23 +3,22 @@ namespace EcoSim
 open Raylib_cs
 
 module Program =
-    let mutable start = false
-    let mutable pause = false
-    
+    let mutable start = true
     
     [<EntryPoint>]
     let main argv =
-        Raylib.InitWindow (1080, 720, "Ecosystem Simulation")
+        Raylib.InitWindow (Constants.WIDTH, Constants.HEIGHT, "Ecosystem Simulation")
         Raylib.SetConfigFlags ConfigFlags.FLAG_WINDOW_RESIZABLE
         Raylib.SetTargetFPS 60
         
         while (Raylib.WindowShouldClose() <> true) do
-            StartScreen.Setup ()
-            Sim.Setup ()
+            match start with 
+               | false -> StartScreen.Setup ()
+               | true -> Sim.Setup ()
             
         
         Raylib.CloseWindow ()
         
-        Plot.ShowData Sim.blobList Sim.blobList Sim.blobList
+        Plot.ShowData Sim.blobList 
         
         0

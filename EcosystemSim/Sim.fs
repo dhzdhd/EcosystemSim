@@ -3,7 +3,6 @@
 open System
 open System.Collections.Generic
 open System.Numerics
-open Microsoft.VisualBasic.CompilerServices
 open Raylib_cs
 
 type BlobType =
@@ -27,22 +26,33 @@ type BlobCount =
     }
 
 module private Utils =
-    let getRandomVector (start, stop) =
+    let getRandomFloat (start, stop) =
         let random = Random ()
         random.Next (start, stop)
-            |> float32
-        
+            |> float32    
+
+    let getRandomVector (start, stop, start', stop') =
+        (getRandomFloat (start, stop), getRandomFloat (start', stop'))
+            |> Vector2 
 
 module Sim =
     let mutable blobList = List.empty
 
     module private Update =
+        let wallCollision (blob: Blob) =
+            match (blob.Center.X, blob.Center.Y) with
+                |  _, _ -> () // return pos
+        
         let moveBlob list =
             blobList <- list
                 |> List.map (fun (element: Blob ) ->
+                    let x = element.Center.X + element.Velocity.X
+                    let y = element.Center.Y + element.Velocity.Y
+                    wallCollision element
+                    // update element with wall collision stuffs :)
                     {
                         element with
-                            Center = Vector2 (Utils.getRandomVector (1, 10) , Utils.getRandomVector (1, 10))
+                            Center =  Vector2 (x, y)
                     })
 
     module private Draw =
@@ -50,15 +60,19 @@ module Sim =
             let blob = {
                 Center = Vector2(50.f, 50.f)
                 Radius = 10.f
-                Velocity = Vector2 (Utils.getRandomVector (1, 10), Utils.getRandomVector (1, 10))
+                Velocity = Utils.getRandomVector (1, 5, 1, 5)
                 Color = Color.GREEN
                 Type = BlobType.PassiveBlob
             }
+            blobList <- blob :: blobList
             blobList <- {
                 blob with
-                    Velocity = Vector2 (Utils.getRandomVector (1, 10), Utils.getRandomVector (1, 10))
-                    Center = Vector2 (Utils.getRandomVector (0, 1080), Utils.getRandomVector (0, 720))
+                    Velocity = Utils.getRandomVector (1, 5, 1, 5)
+                    Center = Utils.getRandomVector (0, 1080, 0, 720)
             } :: blobList
+            
+        let createBlob blobType position=
+            0
         
         let drawBlobs () =
             [blobList]
@@ -70,7 +84,7 @@ module Sim =
       
     let Setup () =
         // Update
-        Update.moveBlob blobList
+        Update.moveBlob blobList 
         
         // Draw
         Raylib.BeginDrawing ()

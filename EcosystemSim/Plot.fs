@@ -14,7 +14,7 @@ module Plot =
         ChartDescription.create "hello"
             <| """<h1 class="title" style="color: rgb(255, 0, 0)">Heading</h1>"""
     
-    let ShowData passiveCount aggroCount diseasedCount=
+    let ShowData blobList =
         let chart =
             [
                 Chart.Spline(x, y)
