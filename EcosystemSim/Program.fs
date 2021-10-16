@@ -10,15 +10,16 @@ module Program =
     [<EntryPoint>]
     let main argv =
         Raylib.InitWindow (1080, 720, "Ecosystem Simulation")
-//        Raylib.SetConfigFlags ConfigFlags.FLAG_WINDOW_TRANSPARENT
+        Raylib.SetConfigFlags ConfigFlags.FLAG_WINDOW_RESIZABLE
         Raylib.SetTargetFPS 60
         
         while (Raylib.WindowShouldClose() <> true) do
-//            StartScreen.Setup ()
+            StartScreen.Setup ()
             Sim.Setup ()
             
         
         Raylib.CloseWindow ()
         
-        Plot.ShowData
+        Plot.ShowData Sim.blobList Sim.blobList Sim.blobList
+        
         0

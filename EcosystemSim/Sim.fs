@@ -1,7 +1,9 @@
 ﻿namespace EcoSim
 
+open System
 open System.Collections.Generic
 open System.Numerics
+open Microsoft.VisualBasic.CompilerServices
 open Raylib_cs
 
 type BlobType =
@@ -13,43 +15,69 @@ type Blob =
     {
         Center: Vector2
         Radius: float32
+        Velocity: Vector2
         Color: Color
-        Type: BlobType  // 1 to 10
+        Type: BlobType
+    }
+    
+type BlobCount =
+    {
+        blob: Blob[]
+        count: int
     }
 
 module private Utils =
-    let CustomTriangle center distanceToPoint =
-        0
+    let getRandomVector (start, stop) =
+        let random = Random ()
+        random.Next (start, stop)
+            |> float32
+        
 
 module Sim =
-//    let mutable diseasedBlobList = List.empty
-    let mutable passiveBlobList = List.empty
-//    let mutable aggroBlobList = List.empty
-    
-    let initializeBlob () =
-        let blob = {Center = Vector2(50.f, 50.f); Radius = 10.f; Color = Color.GREEN; Type = BlobType.PassiveBlob}
-        passiveBlobList <- blob :: passiveBlobList
-    
-    let drawBlobs () =
-        passiveBlobList
-            |> List.map (fun (element: Blob) ->
-            Raylib.DrawCircle (int(element.Center.X) ,int(element.Center.Y), element.Radius, element.Color))
+    let mutable blobList = List.empty
+
+    module private Update =
+        let moveBlob list =
+            blobList <- list
+                |> List.map (fun (element: Blob ) ->
+                    {
+                        element with
+                            Center = Vector2 (Utils.getRandomVector (1, 10) , Utils.getRandomVector (1, 10))
+                    })
+
+    module private Draw =
+        let initializeBlob () =
+            let blob = {
+                Center = Vector2(50.f, 50.f)
+                Radius = 10.f
+                Velocity = Vector2 (Utils.getRandomVector (1, 10), Utils.getRandomVector (1, 10))
+                Color = Color.GREEN
+                Type = BlobType.PassiveBlob
+            }
+            blobList <- {
+                blob with
+                    Velocity = Vector2 (Utils.getRandomVector (1, 10), Utils.getRandomVector (1, 10))
+                    Center = Vector2 (Utils.getRandomVector (0, 1080), Utils.getRandomVector (0, 720))
+            } :: blobList
         
+        let drawBlobs () =
+            [blobList]
+                |> List.map (fun list ->
+                    list |> List.map (fun element -> 
+                        Raylib.DrawCircle (int(element.Center.X) ,int(element.Center.Y), element.Radius, element.Color)))
         
+    Draw.initializeBlob ()  
+      
     let Setup () =
         // Update
-        initializeBlob ()
+        Update.moveBlob blobList
         
         // Draw
         Raylib.BeginDrawing ()
         Raylib.ClearBackground Color.BLACK
         
-//        drawBlobs ()
-        Raylib.DrawCircle (int(passiveBlobList.[0].Center.X) ,int(passiveBlobList.[0].Center.Y), passiveBlobList.[0].Radius,passiveBlobList.[0].Color)
+        Draw.drawBlobs ()
                 
         Raylib.EndDrawing ()
         
         ()
-        
-        
-
