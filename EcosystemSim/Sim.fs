@@ -2,10 +2,14 @@
 
 open System
 open System.Collections.Generic
+open System.Drawing
 open System.Numerics
+open System.Reflection.Metadata
+open System.Threading
 open System.Timers
 open Microsoft.VisualBasic
 open Microsoft.VisualBasic.CompilerServices
+open Plotly.NET
 open Raylib_cs
 
 type BlobType =
@@ -20,7 +24,7 @@ type Blob =
         Velocity: Vector2
         Color: Color
         Type: BlobType
-        Lifetime: int
+        Lifetime: float32
         Ticker: int
     }
     
@@ -28,7 +32,8 @@ type Food =
     {
         Center: Vector2
         Radius: float32
-        Lifetime: int
+        Color: Color
+        Lifetime: float32
     }
     
 type BlobCount =
@@ -49,12 +54,14 @@ module private Utils =
 
 module Sim =
     let mutable blobList = List.empty
-//    let mutable foodList = List.empty
+    let mutable foodList = List.empty
     let mutable secondTicker = 0.
+    let mutable ticker = 0
 
     module private Update =
         let updateTickerCounter () =
             secondTicker <- secondTicker + (1. / 60.)
+            ticker <- ticker + 1
             
             blobList <- blobList
             |> List.map (fun element ->
@@ -70,8 +77,14 @@ module Sim =
                 || blob.Center.Y - blob.Radius < 0.f
             then Vector2 (blob.Velocity.X, blob.Velocity.Y * -1.f)
             else Vector2 ()
+            
+        let getColorAndLifetime (blob: Blob) =
+            match blob.Type with
+                | PassiveBlob -> ((Color.GREEN, float32(blob.Lifetime - float32(0.05)) / 100.f), blob.Lifetime - float32(0.05))
+                | AggroBlob -> ((Color.RED, float32(blob.Lifetime - 10.f) / 100.f), blob.Lifetime - 10.f)
+                | DiseasedBlob -> ((Color.YELLOW, float32(blob.Lifetime - 40.f) / 100.f), blob.Lifetime - 40.f)
                 
-        let moveBlob list =
+        let moveAndUpdateBlob list =
             blobList <- list
                 |> List.map (fun (element: Blob) ->
                     let result = wallCollision element
@@ -83,27 +96,58 @@ module Sim =
                     
                     let x = element.Center.X + vX
                     let y = element.Center.Y + vY
+                    let color, lifetime = getColorAndLifetime element
                     {
                         element with
                             Center = Vector2 (x, y)
                             Velocity = Vector2 (vX, vY)
+                            Color = Raylib.ColorAlpha color
+                            Lifetime = lifetime
+                    })
+                
+        let updateFood list =
+            foodList <- list
+                |> List.map (fun (element: Food) ->
+                    let color = (Color.ORANGE, float32(element.Lifetime - float32(0.1) / 100.f))
+                    let lifetime = element.Lifetime - float32(0.1)
+                    
+                    {
+                        element with
+                            Color = Raylib.ColorAlpha color
+                            Lifetime = lifetime
                     })
 
+    module private Food =
+        let createFood () =
+            let food = {
+                Center = Utils.getRandomVector (0, 1080, 0, 720)
+                Radius = 5.f
+                Color = Raylib.ColorAlpha (Color.ORANGE, float32(0.5))
+                Lifetime = 100.f
+            }
+            
+            foodList <- food :: foodList
+               
+        let drawFood () =
+            foodList
+            |> List.map (fun element ->
+                Raylib.DrawCircle (int(element.Center.X), int(element.Center.Y), element.Radius, element.Color))
+    
     module private Blob =
         let initializeBlob () =
             let blob = {
                 Center = Vector2(50.f, 50.f)
                 Radius = 10.f
-                Velocity = Utils.getRandomVector (-3, 3, -3, 3)
+                Velocity = Utils.getRandomVector (-1, 1, -1, 1)
                 Color = Raylib.ColorAlpha (Color.GREEN, 1.f)
                 Type = BlobType.PassiveBlob
-                Lifetime = 100
+                Lifetime = 100.f
                 Ticker = 0
             }
             blobList <- blob :: blobList
             blobList <- {
                 blob with
-                    Velocity = Utils.getRandomVector (-3, 3, -3, 3)
+                    Velocity = Utils.getRandomVector (-1, 1, -1, 1)
                     Center = Utils.getRandomVector (0, Constants.WIDTH - 20, 0, Constants.HEIGHT - 20)
             } :: blobList
             
@@ -115,25 +159,22 @@ module Sim =
             |> List.map (fun element -> 
                 Raylib.DrawCircle (int(element.Center.X) ,int(element.Center.Y), element.Radius, element.Color))
         
-    module private Food =
-        let drawFood () = ()
-//            foodList
-//            |> List.map (fun element ->
-//                Raylib.DrawCircle (int(element.Center.X)))
-        
     Blob.initializeBlob ()  
       
     let Setup () =
         // Update
+        if ticker % 100 = 0 then Food.createFood ();
+        
         Update.updateTickerCounter ()
-        Update.moveBlob blobList 
+        Update.moveAndUpdateBlob blobList
+        Update.updateFood foodList
         
         // Draw
         Raylib.BeginDrawing ()
         Raylib.ClearBackground Color.BLACK
         
         Blob.drawBlobs ()
-//        Food.drawFood ()
+        Food.drawFood ()
                 
         Raylib.EndDrawing ()
         
