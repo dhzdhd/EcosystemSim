@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Plot.fs" />
         <Compile Include="Constants.fs" />
+        <Compile Include="Plot.fs" />
         <Compile Include="Sim.fs" />
         <Compile Include="StartScreen.fs" />
         <Compile Include="Program.fs" />
