@@ -1,16 +1,8 @@
 ﻿namespace EcoSim
 
 open System
-open System.Collections.Generic
-open System.Drawing
 open System.Numerics
-open System.Reflection.Metadata
-open System.Threading
-open System.Timers
 open EcoSim
-open Microsoft.VisualBasic
-open Microsoft.VisualBasic.CompilerServices
-open Plotly.NET
 open Plotly.NET
 open Raylib_cs
 
@@ -52,7 +44,31 @@ module private Utils =
 
     let getRandomVector (start, stop, start', stop') =
         (getRandomFloat (start, stop), getRandomFloat (start', stop'))
-            |> Vector2 
+            |> Vector2
+            
+    let createBlob (blobType: option<_>) =
+        let colorList = [Color.GREEN; Color.RED; Color.YELLOW]
+        let blobTypeList = [BlobType.PassiveBlob; BlobType.AggroBlob; BlobType.DiseasedBlob]
+        let random = Random ()
+        let random = random.Next (0, 3)
+        
+        let color, blobType' =
+            match blobType with
+                | Some("passive") -> colorList.[0], blobTypeList.[0]
+                | Some("aggro") -> colorList.[1], blobTypeList.[1]
+                | Some("diseased") -> colorList.[2], blobTypeList.[2]
+                | Some _
+                | None -> colorList.[random], blobTypeList.[random]
+                    
+        {
+            Center = getRandomVector (0, Constants.WIDTH - 20, 0, Constants.HEIGHT - 20)
+            Radius = 10.f
+            Velocity = getRandomVector (-1, 2, -1, 2)
+            Color = Raylib.ColorAlpha (color, 1.f)
+            Type = blobType'
+            Lifetime = 100.f
+            Ticker = 0
+        }
 
 module Sim =
     let mutable blobList = List.empty
@@ -91,16 +107,20 @@ module Sim =
 //            |> List.iter (fun (element: Blob) ->
 //                blobList
 //                    |> List.iter (fun (element': Blob) ->
-//                        let collision = Raylib.CheckCollisionCircles (element.Center, element.Radius, element'.Center, element'.Radius)
+//                        let collision =
+//                            Raylib.CheckCollisionCircles (element.Center, element.Radius, element'.Center, element'.Radius)
+//                            && element <> element'
+//                        let vel = Vector2(element'.Velocity.X, element'.Velocity.Y)
+//                        let vel' = Vector2(element.Velocity.X, element.Velocity.Y)
 //                        
 //                        if collision then
 //                            blobList <- blobList
 //                                |> List.filter (fun blob -> blob <> element || blob <> element')
 //                                |> List.append [
-//                                    {element with Velocity = element.Velocity * -1.f}
-//                                    {element' with Velocity = element.Velocity * -1.f}
+//                                    {element with Velocity = vel}
+//                                    {element' with Velocity = vel'}
 //                                ]
-//                            
+                            
 //                            if element <> element' && element.Lifetime > 25.f && element'.Lifetime > 25.f then
 //                            blobList <- blobList
 //                                |> List.append [{
@@ -130,8 +150,8 @@ module Sim =
             let getColorAndLifetime (blob: Blob) =
                 match blob.Type with
                     | PassiveBlob -> ((Color.GREEN, float32(blob.Lifetime - 0.05f) / 100.f), blob.Lifetime - 0.05f)
-                    | AggroBlob -> ((Color.RED, float32(blob.Lifetime - 10.f) / 100.f), blob.Lifetime - 10.f)
-                    | DiseasedBlob -> ((Color.YELLOW, float32(blob.Lifetime - 40.f) / 100.f), blob.Lifetime - 40.f)
+                    | AggroBlob -> ((Color.RED, float32(blob.Lifetime - 0.025f) / 100.f), blob.Lifetime - 0.025f)
+                    | DiseasedBlob -> ((Color.YELLOW, float32(blob.Lifetime - 0.20f) / 100.f), blob.Lifetime - 0.20f)
 
             
             blobList <- list
@@ -216,6 +236,9 @@ module Sim =
         then
             if ticker % 50 = 0 then Food.createFood ()
             
+            if Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON) then
+                blobList <- Utils.createBlob None :: blobList
+            
             Update.updateTickerCounter ()
             Update.moveAndUpdateBlob blobList
             Update.updateFood foodList
@@ -232,7 +255,7 @@ module Sim =
             Blob.drawBlobs ()
             Food.drawFood ()
 
-            Raylib.DrawText ($"{blobList.Length}", Constants.WIDTH - 30, 10, 30, Color.GREEN)
+            Raylib.DrawText ($"{blobList.Length}", Constants.WIDTH - 40, 10, 30, Color.GREEN)
                 
         Raylib.EndDrawing ()
         ()
