@@ -11,6 +11,7 @@ open EcoSim
 open Microsoft.VisualBasic
 open Microsoft.VisualBasic.CompilerServices
 open Plotly.NET
+open Plotly.NET
 open Raylib_cs
 
 type BlobType =
@@ -70,6 +71,7 @@ module Sim =
                 {element with Ticker = element.Ticker + 1})
             
         let onCollision () =
+            // Blob and food
             blobList
             |> List.iter (fun (element: Blob) ->
                 foodList <- foodList |> List.filter (fun (element': Food) ->
@@ -81,8 +83,37 @@ module Sim =
                             |> List.append [{element with Lifetime = 100.f}]
                     
                     not collision
-                    )   
+                    )
                 )
+            
+            // Blob and blob
+//            blobList
+//            |> List.iter (fun (element: Blob) ->
+//                blobList
+//                    |> List.iter (fun (element': Blob) ->
+//                        let collision = Raylib.CheckCollisionCircles (element.Center, element.Radius, element'.Center, element'.Radius)
+//                        
+//                        if collision then
+//                            blobList <- blobList
+//                                |> List.filter (fun blob -> blob <> element || blob <> element')
+//                                |> List.append [
+//                                    {element with Velocity = element.Velocity * -1.f}
+//                                    {element' with Velocity = element.Velocity * -1.f}
+//                                ]
+//                            
+//                            if element <> element' && element.Lifetime > 25.f && element'.Lifetime > 25.f then
+//                            blobList <- blobList
+//                                |> List.append [{
+//                                    Center = Utils.getRandomVector (0, Constants.WIDTH - 20, 0, Constants.HEIGHT - 20)
+//                                    Radius = 10.f
+//                                    Velocity = Utils.getRandomVector (-1, 2, -1, 2)
+//                                    Color = Raylib.ColorAlpha (Color.GREEN, 1.f)
+//                                    Type = BlobType.PassiveBlob
+//                                    Lifetime = 100.f
+//                                    Ticker = 0
+//                                }]
+//                    )
+//                )
             
         let moveAndUpdateBlob list =
             let wallCollision (blob: Blob) =
@@ -169,9 +200,6 @@ module Sim =
             
             for _ in 0 .. 5 do
                 blobList <- getBlob () :: blobList
-            
-        let createBlob blobType position=
-            0
         
         let drawBlobs () =
             blobList
