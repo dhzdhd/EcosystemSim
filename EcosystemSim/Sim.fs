@@ -7,6 +7,7 @@ open System.Numerics
 open System.Reflection.Metadata
 open System.Threading
 open System.Timers
+open EcoSim
 open Microsoft.VisualBasic
 open Microsoft.VisualBasic.CompilerServices
 open Plotly.NET
@@ -57,6 +58,7 @@ module Sim =
     let mutable foodList = List.empty
     let mutable secondTicker = 0.
     let mutable ticker = 0
+    let mutable paused = true
 
     module private Update =
         let updateTickerCounter () =
@@ -67,12 +69,18 @@ module Sim =
             |> List.map (fun element ->
                 {element with Ticker = element.Ticker + 1})
             
-        let checkForCollision =
+        let onCollision () =
             blobList
-            |> List.map (fun (element: Blob) ->
-                foodList <- foodList |> List.map (fun (element': Food) ->
-                    let condition = Raylib.CheckCollisionCircles (element.Center, element.Radius, element'.Center, element'.Radius)
-                    // Do stuff here :)
+            |> List.iter (fun (element: Blob) ->
+                foodList <- foodList |> List.filter (fun (element': Food) ->
+                    let collision = Raylib.CheckCollisionCircles (element.Center, element.Radius, element'.Center, element'.Radius)
+                    
+                    if collision then
+                        blobList <- blobList
+                            |> List.filter (fun blob -> blob <> element)
+                            |> List.append [{element with Lifetime = 100.f}]
+                    
+                    not collision
                     )   
                 )
             
@@ -97,11 +105,11 @@ module Sim =
             
             blobList <- list
                 |> List.map (fun (element: Blob) ->
-                    let result = wallCollision element
                     
+                    let result = wallCollision element
                     let vX, vY =
                         if result <> Vector2 () then result.X, result.Y
-                        elif element.Ticker % 60 = 0 then Utils.getRandomFloat(-1, 1), Utils.getRandomFloat(-1, 1) 
+                        elif element.Ticker % 120 = 0 then Utils.getRandomFloat(-1, 2), Utils.getRandomFloat(-1, 2) 
                         else element.Velocity.X, element.Velocity.Y
                     
                     let x = element.Center.X + vX
@@ -114,6 +122,9 @@ module Sim =
                             Color = Raylib.ColorAlpha color
                             Lifetime = lifetime
                     })
+                |> List.filter (fun (element: Blob) ->
+                    int(element.Lifetime) <> 0
+                    )
                 
         let updateFood list =
             foodList <- list
@@ -149,7 +160,7 @@ module Sim =
                 {
                     Center = Utils.getRandomVector (0, Constants.WIDTH - 20, 0, Constants.HEIGHT - 20)
                     Radius = 10.f
-                    Velocity = Utils.getRandomVector (-1, 1, -1, 1)
+                    Velocity = Utils.getRandomVector (-1, 2, -1, 2)
                     Color = Raylib.ColorAlpha (Color.GREEN, 1.f)
                     Type = BlobType.PassiveBlob
                     Lifetime = 100.f
@@ -171,19 +182,29 @@ module Sim =
       
     let Setup () =
         // Update
-        if ticker % 100 = 0 then Food.createFood ()
+        if (Raylib.IsKeyPressed KeyboardKey.KEY_SPACE) then paused <- not paused// Time period for food creation
         
-        Update.updateTickerCounter ()
-        Update.moveAndUpdateBlob blobList
-        Update.updateFood foodList
+        if not paused
+        then
+            if ticker % 50 = 0 then Food.createFood ()
+            
+            Update.updateTickerCounter ()
+            Update.moveAndUpdateBlob blobList
+            Update.updateFood foodList
+            Update.onCollision ()
         
         // Draw
         Raylib.BeginDrawing ()
         Raylib.ClearBackground Color.BLACK
         
-        Blob.drawBlobs ()
-        Food.drawFood ()
+        if paused
+        then
+            Raylib.DrawText ("PAUSED", (Constants.WIDTH / 2) - 130, (Constants.HEIGHT / 2) - 50, 70, Color.GREEN)
+        else
+            Blob.drawBlobs ()
+            Food.drawFood ()
+
+            Raylib.DrawText ($"{blobList.Length}", Constants.WIDTH - 30, 10, 30, Color.GREEN)
                 
         Raylib.EndDrawing ()
-        
         ()
